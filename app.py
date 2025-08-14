@@ -12,53 +12,34 @@ PASSWORD = "snaplogic123"
 def check_password():
     """Returns `True` if the user had the correct password."""
     
-    def password_entered():
-        """Checks whether a password entered by the user is correct."""
-        username = st.session_state["username"]
-        password = st.session_state["password"]
-        
-        if username == USERNAME and password == PASSWORD:
-            st.session_state["password_correct"] = True
-            st.session_state["authenticated_user"] = username
-            del st.session_state["password"]  # Don't store password in session
-        else:
-            st.session_state["password_correct"] = False
-
-    # First run or password not correct, show login form
-    if "password_correct" not in st.session_state:
-        # First run, show inputs for username + password
-        st.markdown("## 🔐 Sales Engagement Dashboard Login")
-        st.markdown("---")
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.text_input("Username", key="username", placeholder="Enter your username")
-            st.text_input("Password", type="password", key="password", placeholder="Enter your password")
-            
-            if st.button("Login", use_container_width=True):
-                password_entered()
-        
-        return False
-    
-    elif not st.session_state["password_correct"]:
-        # Password not correct, show input + error
-        st.markdown("## 🔐 Sales Engagement Dashboard Login")
-        st.error("😕 Username or password incorrect. Please try again.")
-        st.markdown("---")
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.text_input("Username", key="username", placeholder="Enter your username")
-            st.text_input("Password", type="password", key="password", placeholder="Enter your password")
-            
-            if st.button("Login", use_container_width=True):
-                password_entered()
-        
-        return False
-    
-    else:
-        # Password correct
+    # Check if already authenticated
+    if st.session_state.get("password_correct", False):
         return True
+    
+    # Show login form
+    st.markdown("## 🔐 Sales Engagement Dashboard Login")
+    if st.session_state.get("password_correct") == False:
+        st.error("😕 Username or password incorrect. Please try again.")
+    st.markdown("---")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        # Use a form to handle the login properly
+        with st.form("login_form"):
+            username = st.text_input("Username", placeholder="Enter your username")
+            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            submit_button = st.form_submit_button("Login", use_container_width=True)
+            
+            if submit_button:
+                if username == USERNAME and password == PASSWORD:
+                    st.session_state["password_correct"] = True
+                    st.session_state["authenticated_user"] = username
+                    st.rerun()
+                else:
+                    st.session_state["password_correct"] = False
+                    st.rerun()
+    
+    return False
 
 # Check authentication first
 if not check_password():
