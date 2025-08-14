@@ -5,7 +5,66 @@ import json
 from datetime import datetime, timedelta
 import math
 
-# Page config
+# Authentication configuration
+USERNAME = "admin"
+PASSWORD = "snaplogic123"
+
+def check_password():
+    """Returns `True` if the user had the correct password."""
+    
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        username = st.session_state["username"]
+        password = st.session_state["password"]
+        
+        if username == USERNAME and password == PASSWORD:
+            st.session_state["password_correct"] = True
+            st.session_state["authenticated_user"] = username
+            del st.session_state["password"]  # Don't store password in session
+        else:
+            st.session_state["password_correct"] = False
+
+    # First run or password not correct, show login form
+    if "password_correct" not in st.session_state:
+        # First run, show inputs for username + password
+        st.markdown("## 🔐 Sales Engagement Dashboard Login")
+        st.markdown("---")
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input("Username", key="username", placeholder="Enter your username")
+            st.text_input("Password", type="password", key="password", placeholder="Enter your password")
+            
+            if st.button("Login", use_container_width=True):
+                password_entered()
+        
+        return False
+    
+    elif not st.session_state["password_correct"]:
+        # Password not correct, show input + error
+        st.markdown("## 🔐 Sales Engagement Dashboard Login")
+        st.error("😕 Username or password incorrect. Please try again.")
+        st.markdown("---")
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input("Username", key="username", placeholder="Enter your username")
+            st.text_input("Password", type="password", key="password", placeholder="Enter your password")
+            
+            if st.button("Login", use_container_width=True):
+                password_entered()
+        
+        return False
+    
+    else:
+        # Password correct
+        return True
+
+# Check authentication first
+if not check_password():
+    st.stop()  # Stop execution if not authenticated
+
+# Page config (after authentication)
 st.set_page_config(page_title="Sales Engagement Dashboard", layout="wide")
 
 # API configuration
@@ -97,8 +156,6 @@ def get_data():
         
         if 'created_at' in df.columns:
             df['created_at'] = pd.to_datetime(df['created_at'])
-        
-
         
         return df
         
@@ -434,6 +491,17 @@ st.divider()
 
 # Sidebar filters
 with st.sidebar:
+    # Add logout button at the top
+    st.markdown("---")
+    current_user = st.session_state.get("authenticated_user", "Unknown")
+    st.caption(f"👤 Logged in as: **{current_user}**")
+    
+    if st.button("🚪 Logout"):
+        # Clear all session state
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
+    
     st.header("Filters")
     
     platform_filter = st.selectbox(
